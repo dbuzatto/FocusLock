@@ -1,0 +1,134 @@
+# FocusLock 🔒
+
+> Bloqueie distrações. Maximize seu foco.
+
+FocusLock é um aplicativo desktop multiplataforma para ajudar você a manter o foco durante sessões de trabalho. Defina o tempo de foco, escolha quais aplicativos são permitidos durante a sessão e acompanhe seu progresso.
+
+![FocusLock](https://img.shields.io/badge/version-1.0.0-blue.svg)
+![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey.svg)
+![License](https://img.shields.io/badge/license-MIT-green.svg)
+
+## ✨ Funcionalidades
+
+- ⏱️ **Timer de Foco** - Defina sessões de foco de 5 a 120 minutos
+- 📱 **Seleção de Apps** - Escolha quais aplicativos podem ser usados durante o foco
+- 📊 **Histórico de Sessões** - Acompanhe suas sessões completas e tempo total focado
+- 🔔 **Notificações** - Receba alertas quando a sessão terminar
+- 🎨 **Interface Moderna** - Design escuro, limpo e intuitivo
+- 💻 **Multiplataforma** - Funciona no Windows, macOS e Linux
+
+## 🚀 Instalação
+
+### Pré-requisitos
+
+- [Node.js](https://nodejs.org/) (versão 18 ou superior)
+- npm ou yarn
+
+### Passos
+
+1. Clone o repositório ou navegue até a pasta do projeto:
+
+```bash
+cd FocusLock
+```
+
+2. Instale as dependências:
+
+```bash
+npm install
+```
+
+3. Execute o aplicativo em modo de desenvolvimento:
+
+```bash
+npm run dev
+```
+
+Ou compile e execute:
+
+```bash
+npm start
+```
+
+## 🏗️ Build para Produção
+
+### Gerar instalador
+
+```bash
+# Para todas as plataformas
+npm run dist
+
+# Ou apenas gerar os arquivos sem instalador
+npm run pack
+```
+
+Os instaladores serão gerados na pasta `release/`.
+
+## 📁 Estrutura do Projeto
+
+```
+FocusLock/
+├── src/
+│   ├── main/
+│   │   ├── main.ts          # Processo principal do Electron
+│   │   └── preload.ts       # Script de preload (ponte IPC)
+│   └── renderer/
+│       ├── index.tsx        # Entrada do React
+│       ├── App.tsx          # Componente principal
+│       ├── components/
+│       │   ├── Header.tsx       # Cabeçalho com logo
+│       │   ├── Timer.tsx        # Display do timer circular
+│       │   ├── TimerControls.tsx # Controles de duração e botões
+│       │   ├── AppSelector.tsx  # Modal de seleção de apps
+│       │   └── SessionHistory.tsx # Modal de histórico
+│       └── styles/
+│           └── global.css   # Estilos globais
+├── public/
+│   └── index.html           # HTML principal
+├── package.json
+├── tsconfig.json
+├── webpack.config.js
+└── README.md
+```
+
+## 🎮 Como Usar
+
+1. **Defina o Tempo** - Use os botões predefinidos (15, 25, 45, 60, 90 min) ou o slider para escolher a duração
+2. **Selecione os Apps** - Clique em "Selecionar Apps Permitidos" e escolha quais apps você usará
+3. **Inicie o Foco** - Clique em "Iniciar Foco" e concentre-se!
+4. **Acompanhe seu Progresso** - Veja seu histórico de sessões clicando no ícone 📊
+
+## 🛠️ Tecnologias
+
+- **Electron** - Framework para apps desktop
+- **React** - Biblioteca UI
+- **TypeScript** - Tipagem estática
+- **Webpack** - Bundler
+- **CSS3** - Estilos com variáveis CSS e animações
+
+## 📝 Scripts Disponíveis
+
+| Script | Descrição |
+|--------|-----------|
+| `npm run dev` | Executa em modo desenvolvimento com hot-reload |
+| `npm start` | Compila e executa o aplicativo |
+| `npm run build` | Compila TypeScript e Webpack |
+| `npm run pack` | Gera build sem instalador |
+| `npm run dist` | Gera instaladores para distribuição |
+
+## 🔮 Próximos Passos (Roadmap)
+
+- [ ] Bloqueio real de aplicativos durante sessões
+- [ ] Temas claro/escuro
+- [ ] Estatísticas semanais/mensais
+- [ ] Integração com Pomodoro (intervalos automáticos)
+- [ ] Sons ambiente para foco
+- [ ] Sincronização em nuvem
+
+## 📄 Licença
+
+Este projeto está sob a licença MIT. Veja o arquivo [LICENSE](LICENSE) para mais detalhes.
+
+---
+
+Feito com ❤️ por Diogo Buzatto
