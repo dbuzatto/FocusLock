@@ -113,13 +113,13 @@
         }
       ],
       "category": "public.app-category.productivity",
-      "icon": "assets/icon.icns",
+      "icon": "assets/icon.png",
       "hardenedRuntime": true,
       "gatekeeperAssess": false
     },
     "dmg": {
       "title": "FocusLock Installer",
-      "icon": "assets/icon.icns",
+      "icon": "assets/icon.png",
       "contents": [
         {
           "x": 130,
@@ -162,8 +162,8 @@
     },
     "publish": {
       "provider": "github",
-      "owner": "diogobuzatto",
-      "repo": "focuslock",
+      "owner": "dbuzatto",
+      "repo": "FocusLock",
       "releaseType": "release"
     }
   }
