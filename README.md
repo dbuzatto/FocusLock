@@ -43,38 +43,25 @@ FocusLock é um aplicativo desktop multiplataforma (Windows e Linux) que ajuda v
 
 #### Linux (Debian/Ubuntu)
 ```bash
-# Instalação automática via script
-curl -fsSL https://raw.githubusercontent.com/diogobuzatto/focuslock/main/install.sh | bash
-
-# Ou baixe o .deb diretamente
-wget https://github.com/diogobuzatto/focuslock/releases/latest/download/FocusLock-1.0.0-linux-x64.deb
-sudo dpkg -i FocusLock-1.0.0-linux-x64.deb
-```
-
-#### Linux (Fedora/RHEL)
-```bash
-# Baixe o .rpm
-wget https://github.com/diogobuzatto/focuslock/releases/latest/download/FocusLock-1.0.0-linux-x64.rpm
-sudo dnf install ./FocusLock-1.0.0-linux-x64.rpm
+# Baixe o .deb diretamente
+wget https://github.com/dbuzatto/FocusLock/releases/latest/download/FocusLock-1.0.0-linux-amd64.deb
+sudo dpkg -i FocusLock-1.0.0-linux-amd64.deb
 ```
 
 #### Linux (AppImage - Universal)
 ```bash
-wget https://github.com/diogobuzatto/focuslock/releases/latest/download/FocusLock-1.0.0-linux-x64.AppImage
-chmod +x FocusLock-1.0.0-linux-x64.AppImage
-./FocusLock-1.0.0-linux-x64.AppImage
+wget https://github.com/dbuzatto/FocusLock/releases/latest/download/FocusLock-1.0.0-linux-x86_64.AppImage
+chmod +x FocusLock-1.0.0-linux-x86_64.AppImage
+./FocusLock-1.0.0-linux-x86_64.AppImage
 ```
 
 #### Windows
-Baixe o instalador `.exe` da [página de releases](https://github.com/diogobuzatto/focuslock/releases/latest).
+Baixe o instalador `.exe` da [página de releases](https://github.com/dbuzatto/FocusLock/releases).
 
-#### macOS (Homebrew)
-```bash
-# Após publicar o tap
-brew install --cask diogobuzatto/tap/focuslock
-
-# Ou baixe o .dmg da página de releases
-```
+#### macOS
+Baixe o `.dmg` da [página de releases](https://github.com/dbuzatto/FocusLock/releases):
+- **Intel**: `FocusLock-1.0.0-mac-x64.dmg`
+- **Apple Silicon (M1/M2/M3)**: `FocusLock-1.0.0-mac-arm64.dmg`
 
 ---
 
