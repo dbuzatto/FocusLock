@@ -59,7 +59,12 @@ chmod +x FocusLock-1.0.0-linux-x86_64.AppImage
 Baixe o instalador `.exe` da [página de releases](https://github.com/dbuzatto/FocusLock/releases).
 
 #### macOS
-Baixe o `.dmg` da [página de releases](https://github.com/dbuzatto/FocusLock/releases):
+```bash
+# Via Homebrew (em breve)
+brew install --cask dbuzatto/tap/focuslock
+```
+
+Ou baixe o `.dmg` da [página de releases](https://github.com/dbuzatto/FocusLock/releases):
 - **Intel**: `FocusLock-1.0.0-mac-x64.dmg`
 - **Apple Silicon (M1/M2/M3)**: `FocusLock-1.0.0-mac-arm64.dmg`
 
