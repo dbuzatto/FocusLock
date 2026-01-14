@@ -172,6 +172,8 @@ function getInstalledApps(): Promise<string[]> {
     } else if (platform === 'win32') {
       // Lista apps do Windows de múltiplas fontes
       const commands = [
+        // Força encoding UTF-8
+        '[Console]::OutputEncoding = [System.Text.Encoding]::UTF8',
         // Apps instalados via registro (x64)
         'Get-ItemProperty HKLM:\\Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\* | Where-Object { $_.DisplayName } | Select-Object -ExpandProperty DisplayName',
         // Apps instalados via registro (x86)
@@ -182,8 +184,8 @@ function getInstalledApps(): Promise<string[]> {
         'Get-AppxPackage | Where-Object { $_.IsFramework -eq $false } | Select-Object -ExpandProperty Name'
       ];
       
-      const command = `powershell -Command "${commands.join('; ')}"`;
-      exec(command, (error, stdout) => {
+      const command = `chcp 65001 >nul && powershell -NoProfile -ExecutionPolicy Bypass -Command "${commands.join('; ')}"`;
+      exec(command, { encoding: 'utf8', shell: 'cmd.exe' }, (error, stdout) => {
         if (error) {
           resolve(getDefaultApps());
           return;

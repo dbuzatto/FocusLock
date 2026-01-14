@@ -187,28 +187,16 @@ FocusLock/
 | `npm run pack` | Gera build sem instalador |
 | `npm run dist` | Gera instaladores para distribuição |
 
-## 🔮 Roadmap
+## 🔮 Funcionalidades Implementadas
 
-### ✅ Implementado
 - [x] Timer de foco com interface moderna
 - [x] Seleção de apps permitidos
 - [x] Bloqueio real de aplicativos (KDE/Wayland)
-- [x] Bloqueio real de aplicativos (Windows)
-- [x] Modo "Não Perturbe" automático (KDE e Windows)
+- [x] Modo "Não Perturbe" automático
 - [x] Pausar/Continuar sessão
 - [x] Histórico de sessões
 - [x] Tema Liquid Glass (inspirado no macOS)
 - [x] Trilha de progresso animada
-- [x] Suporte multiplataforma (Windows + Linux)
-
-### 🚧 Próximos Passos
-- [ ] Suporte a macOS
-- [ ] Suporte a GNOME/X11 melhorado
-- [ ] Tema claro/escuro
-- [ ] Estatísticas semanais/mensais
-- [ ] Integração com Pomodoro (intervalos automáticos)
-- [ ] Sons ambiente para foco
-- [ ] Atalhos de teclado globais
 
 ## 📄 Licença
 

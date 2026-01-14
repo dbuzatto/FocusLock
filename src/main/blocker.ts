@@ -311,16 +311,17 @@ export async function startBlocking(allowedApps: string[]): Promise<void> {
           // Windows - usa PowerShell para controle de janelas
           const windows = await getWindowsWindows();
           for (const win of windows) {
-            if (!isAppAllowed(win.title, allowedApps)) {
-              console.log('Minimizando (Windows):', win.title);
+            // Verifica pelo título E pelo nome do processo
+            if (!isAppAllowed(win.title, allowedApps) && !isAppAllowed(win.processName, allowedApps)) {
+              console.log('Minimizando (Windows):', win.title, `(${win.processName})`);
               await minimizeWindowsWindow(win.handle);
             }
           }
           
           // Verifica a janela ativa
           const activeWin = await getWindowsActiveWindow();
-          if (activeWin && !isAppAllowed(activeWin.title, allowedApps)) {
-            console.log('Minimizando janela ativa (Windows):', activeWin.title);
+          if (activeWin && !isAppAllowed(activeWin.title, allowedApps) && !isAppAllowed(activeWin.processName, allowedApps)) {
+            console.log('Minimizando janela ativa (Windows):', activeWin.title, `(${activeWin.processName})`);
             await minimizeWindowsWindow(activeWin.handle);
           }
         } else if (desktop === 'kde') {
@@ -372,14 +373,15 @@ async function minimizeBlockedWindows(allowedApps: string[], desktop: string): P
       // No Windows, usa PowerShell com Win32 API
       console.log('Buscando janelas Windows...');
       const windows = await getWindowsWindows();
-      console.log('Janelas encontradas no Windows:', windows.length, windows.map(w => w.title));
+      console.log('Janelas encontradas no Windows:', windows.length, windows.map(w => `${w.processName}: ${w.title}`));
       
       for (const win of windows) {
-        const allowed = isAppAllowed(win.title, allowedApps);
-        console.log(`Janela: "${win.title}" - Permitida: ${allowed}`);
+        // Verifica pelo título E pelo nome do processo
+        const allowed = isAppAllowed(win.title, allowedApps) || isAppAllowed(win.processName, allowedApps);
+        console.log(`Janela: "${win.title}" (${win.processName}) - Permitida: ${allowed}`);
         
         if (!allowed) {
-          console.log('>>> Minimizando janela (Windows):', win.title);
+          console.log('>>> Minimizando janela (Windows):', win.title, `(${win.processName})`);
           await minimizeWindowsWindow(win.handle);
         }
       }
