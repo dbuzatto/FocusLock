@@ -1,0 +1,127 @@
+name: Build and Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to release (e.g., 1.0.0)'
+        required: true
+        default: '1.0.0'
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            platform: linux
+          - os: windows-latest
+            platform: win
+          - os: macos-latest
+            platform: mac
+
+    runs-on: ${{ matrix.os }}
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      # Linux: Install required packages
+      - name: Install Linux dependencies
+        if: matrix.platform == 'linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libarchive-tools rpm librsvg2-bin
+
+      # Generate icons (Linux only, then share)
+      - name: Generate icons
+        if: matrix.platform == 'linux'
+        run: |
+          chmod +x assets/generate-icons.sh
+          ./assets/generate-icons.sh
+
+      # Use pre-generated icons for Windows/Mac
+      - name: Download icons artifact
+        if: matrix.platform != 'linux'
+        uses: actions/download-artifact@v4
+        with:
+          name: icons
+          path: assets/
+        continue-on-error: true
+
+      - name: Build application
+        run: npm run build
+
+      - name: Build distributables
+        run: npm run dist:${{ matrix.platform }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # Upload icons as artifact (from Linux build)
+      - name: Upload icons artifact
+        if: matrix.platform == 'linux'
+        uses: actions/upload-artifact@v4
+        with:
+          name: icons
+          path: |
+            assets/icon.png
+            assets/icon.ico
+            assets/icon.icns
+            assets/icons/
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: focuslock-${{ matrix.platform }}
+          path: |
+            release/*.deb
+            release/*.rpm
+            release/*.AppImage
+            release/*.tar.gz
+            release/*.dmg
+            release/*.zip
+            release/*.exe
+          if-no-files-found: ignore
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/')
+    
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts/
+
+      - name: List artifacts
+        run: find artifacts/ -type f
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            artifacts/focuslock-linux/*.deb
+            artifacts/focuslock-linux/*.rpm
+            artifacts/focuslock-linux/*.AppImage
+            artifacts/focuslock-linux/*.tar.gz
+            artifacts/focuslock-mac/*.dmg
+            artifacts/focuslock-mac/*.zip
+            artifacts/focuslock-win/*.exe
+          draft: false
+          prerelease: false
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

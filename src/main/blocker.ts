@@ -13,6 +13,15 @@ import {
   checkKDEDependencies,
   getKDEInstallCommand
 } from './kde-blocker';
+import {
+  isWindows,
+  getWindowsWindows,
+  getWindowsActiveWindow,
+  minimizeWindowsWindow,
+  enableWindowsFocusAssist,
+  disableWindowsFocusAssist,
+  WINDOWS_SYSTEM_APPS
+} from './windows-blocker';
 
 const execAsync = promisify(exec);
 
@@ -125,10 +134,13 @@ async function getIsWayland(): Promise<boolean> {
 // Ativar modo Não Perturbe
 export async function enableDoNotDisturb(): Promise<void> {
   const platform = process.platform;
-  const desktop = await getDesktopEnvironment();
   
   try {
-    if (platform === 'linux') {
+    if (platform === 'win32') {
+      // Windows - Focus Assist via PowerShell
+      await enableWindowsFocusAssist();
+    } else if (platform === 'linux') {
+      const desktop = await getDesktopEnvironment();
       if (desktop === 'kde') {
         await enableKDEDoNotDisturb();
       } else {
@@ -139,9 +151,6 @@ export async function enableDoNotDisturb(): Promise<void> {
       // macOS - ativa Do Not Disturb
       await execAsync('defaults -currentHost write ~/Library/Preferences/ByHost/com.apple.notificationcenterui doNotDisturb -boolean true');
       await execAsync('killall NotificationCenter');
-    } else if (platform === 'win32') {
-      // Windows - Focus Assist
-      await execAsync('powershell -Command "Set-ItemProperty -Path \'HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\Notifications\\Settings\' -Name \'NOC_GLOBAL_SETTING_TOASTS_ENABLED\' -Value 0"').catch(() => {});
     }
     console.log('Modo Não Perturbe ativado');
   } catch (error) {
@@ -152,10 +161,13 @@ export async function enableDoNotDisturb(): Promise<void> {
 // Desativar modo Não Perturbe
 export async function disableDoNotDisturb(): Promise<void> {
   const platform = process.platform;
-  const desktop = await getDesktopEnvironment();
   
   try {
-    if (platform === 'linux') {
+    if (platform === 'win32') {
+      // Windows - Focus Assist
+      await disableWindowsFocusAssist();
+    } else if (platform === 'linux') {
+      const desktop = await getDesktopEnvironment();
       if (desktop === 'kde') {
         await disableKDEDoNotDisturb();
       } else {
@@ -164,8 +176,6 @@ export async function disableDoNotDisturb(): Promise<void> {
     } else if (platform === 'darwin') {
       await execAsync('defaults -currentHost write ~/Library/Preferences/ByHost/com.apple.notificationcenterui doNotDisturb -boolean false');
       await execAsync('killall NotificationCenter');
-    } else if (platform === 'win32') {
-      await execAsync('powershell -Command "Set-ItemProperty -Path \'HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\Notifications\\Settings\' -Name \'NOC_GLOBAL_SETTING_TOASTS_ENABLED\' -Value 1"').catch(() => {});
     }
     console.log('Modo Não Perturbe desativado');
   } catch (error) {
@@ -243,9 +253,16 @@ function isAppAllowed(windowTitle: string, allowedApps: string[]): boolean {
   // FocusLock sempre é permitido
   if (windowTitle.toLowerCase().includes('focuslock')) return true;
   
-  // Verifica se é um app do sistema
+  // Verifica se é um app do sistema (Linux)
   for (const sysApp of SYSTEM_APPS) {
     if (windowTitle.toLowerCase().includes(sysApp.toLowerCase())) return true;
+  }
+  
+  // Verifica se é um app do sistema (Windows)
+  if (process.platform === 'win32') {
+    for (const sysApp of WINDOWS_SYSTEM_APPS) {
+      if (windowTitle.toLowerCase().includes(sysApp.toLowerCase())) return true;
+    }
   }
   
   // Verifica se está na lista de permitidos
@@ -268,11 +285,12 @@ export async function startBlocking(allowedApps: string[]): Promise<void> {
   if (isBlocking) return;
   isBlocking = true;
   
-  const desktop = await getDesktopEnvironment();
-  const usingWayland = await getIsWayland();
+  const platform = process.platform;
+  const desktop = platform === 'linux' ? await getDesktopEnvironment() : 'windows';
+  const usingWayland = platform === 'linux' ? await getIsWayland() : false;
   
   console.log('Iniciando bloqueio. Apps permitidos:', allowedApps);
-  console.log('Desktop:', desktop, 'Wayland:', usingWayland);
+  console.log('Platform:', platform, 'Desktop:', desktop, 'Wayland:', usingWayland);
   
   // Sempre ativa o modo Não Perturbe
   await enableDoNotDisturb();
@@ -289,7 +307,23 @@ export async function startBlocking(allowedApps: string[]): Promise<void> {
       if (!isBlocking) return;
       
       try {
-        if (desktop === 'kde') {
+        if (platform === 'win32') {
+          // Windows - usa PowerShell para controle de janelas
+          const windows = await getWindowsWindows();
+          for (const win of windows) {
+            if (!isAppAllowed(win.title, allowedApps)) {
+              console.log('Minimizando (Windows):', win.title);
+              await minimizeWindowsWindow(win.handle);
+            }
+          }
+          
+          // Verifica a janela ativa
+          const activeWin = await getWindowsActiveWindow();
+          if (activeWin && !isAppAllowed(activeWin.title, allowedApps)) {
+            console.log('Minimizando janela ativa (Windows):', activeWin.title);
+            await minimizeWindowsWindow(activeWin.handle);
+          }
+        } else if (desktop === 'kde') {
           // No KDE, usa a API específica
           const windows = await getKDEWindows();
           for (const win of windows) {
@@ -334,7 +368,22 @@ export async function startBlocking(allowedApps: string[]): Promise<void> {
 // Minimiza todas as janelas bloqueadas
 async function minimizeBlockedWindows(allowedApps: string[], desktop: string): Promise<void> {
   try {
-    if (desktop === 'kde') {
+    if (process.platform === 'win32') {
+      // No Windows, usa PowerShell com Win32 API
+      console.log('Buscando janelas Windows...');
+      const windows = await getWindowsWindows();
+      console.log('Janelas encontradas no Windows:', windows.length, windows.map(w => w.title));
+      
+      for (const win of windows) {
+        const allowed = isAppAllowed(win.title, allowedApps);
+        console.log(`Janela: "${win.title}" - Permitida: ${allowed}`);
+        
+        if (!allowed) {
+          console.log('>>> Minimizando janela (Windows):', win.title);
+          await minimizeWindowsWindow(win.handle);
+        }
+      }
+    } else if (desktop === 'kde') {
       // No KDE, usa DBus para minimizar
       console.log('Buscando janelas KDE...');
       const windows = await getKDEWindows();
@@ -379,10 +428,15 @@ export async function stopBlocking(): Promise<void> {
 }
 
 // Verificar se ferramentas necessárias estão instaladas
-export async function checkDependencies(): Promise<{ hasWmctrl: boolean; hasXdotool: boolean; isWayland: boolean }> {
+export async function checkDependencies(): Promise<{ hasWmctrl: boolean; hasXdotool: boolean; isWayland: boolean; isWindows: boolean }> {
   let hasWmctrl = false;
   let hasXdotool = false;
-  let isWayland = false;
+  let usingWayland = false;
+  
+  // Windows não precisa de dependências externas
+  if (process.platform === 'win32') {
+    return { hasWmctrl: true, hasXdotool: true, isWayland: false, isWindows: true };
+  }
   
   try {
     await execAsync('which wmctrl');
@@ -397,14 +451,19 @@ export async function checkDependencies(): Promise<{ hasWmctrl: boolean; hasXdot
   // Verificar se está no Wayland
   try {
     const { stdout } = await execAsync('echo $XDG_SESSION_TYPE');
-    isWayland = stdout.trim() === 'wayland';
+    usingWayland = stdout.trim() === 'wayland';
   } catch {}
   
-  return { hasWmctrl, hasXdotool, isWayland };
+  return { hasWmctrl, hasXdotool, isWayland: usingWayland, isWindows: false };
 }
 
 // Mostrar diálogo de permissões/dependências
 export async function showPermissionsDialog(mainWindow: BrowserWindow | null): Promise<boolean> {
+  // Windows não precisa de diálogo de configuração
+  if (process.platform === 'win32') {
+    return true;
+  }
+  
   const deps = await checkDependencies();
   const desktop = await getDesktopEnvironment();
   const kdeDeps = desktop === 'kde' ? await checkKDEDependencies() : null;
@@ -468,7 +527,13 @@ export async function showPermissionsDialog(mainWindow: BrowserWindow | null): P
 // Verificar se o ambiente suporta controle de janelas
 export async function testWindowControl(): Promise<boolean> {
   try {
-    // Tenta listar janelas para ver se funciona
+    // Windows sempre suporta via PowerShell
+    if (process.platform === 'win32') {
+      const windows = await getWindowsWindows();
+      return windows.length > 0;
+    }
+    
+    // Linux - tenta listar janelas para ver se funciona
     const { stdout } = await execAsync('wmctrl -l 2>/dev/null || xdotool search --name "" 2>/dev/null');
     return stdout.trim().length > 0;
   } catch {

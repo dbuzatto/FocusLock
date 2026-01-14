@@ -2,34 +2,104 @@
 
 > Bloqueie distrações. Maximize seu foco.
 
-FocusLock é um aplicativo desktop multiplataforma para ajudar você a manter o foco durante sessões de trabalho. Defina o tempo de foco, escolha quais aplicativos são permitidos durante a sessão e acompanhe seu progresso.
+FocusLock é um aplicativo desktop multiplataforma (Windows e Linux) que ajuda você a manter o foco durante sessões de trabalho. Defina o tempo de foco, escolha quais aplicativos são permitidos, ative o modo "Não Perturbe" automaticamente e acompanhe seu progresso.
 
 ![FocusLock](https://img.shields.io/badge/version-1.0.0-blue.svg)
-![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey.svg)
+![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20Linux-lightgrey.svg)
 ![License](https://img.shields.io/badge/license-MIT-green.svg)
 
 ## ✨ Funcionalidades
 
 - ⏱️ **Timer de Foco** - Defina sessões de foco de 5 a 120 minutos
 - 📱 **Seleção de Apps** - Escolha quais aplicativos podem ser usados durante o foco
+- 🚫 **Bloqueio Real** - Minimiza automaticamente apps não permitidos durante a sessão
+- 🔕 **Modo Não Perturbe** - Ativa automaticamente o DND do sistema durante o foco
 - 📊 **Histórico de Sessões** - Acompanhe suas sessões completas e tempo total focado
 - 🔔 **Notificações** - Receba alertas quando a sessão terminar
-- 🎨 **Interface Moderna** - Design escuro, limpo e intuitivo
-- 💻 **Multiplataforma** - Funciona no Windows, macOS e Linux
+- ⏸️ **Pausar/Continuar** - Pause o timer e o bloqueio quando necessário
+- 🎨 **Interface Liquid Glass** - Design moderno inspirado no macOS com efeitos de vidro
+- 🌈 **Animações Elegantes** - Trilha de progresso com gradiente colorido
+
+## 🖥️ Plataformas Suportadas
+
+### Windows 10/11
+- Bloqueio de janelas via Win32 API (PowerShell)
+- Focus Assist (Não Perturbe) automático
+- Listagem de apps instalados via Registro e UWP
+
+### Linux (KDE Plasma 6)
+- Bloqueio de janelas via KWin Scripting (DBus)
+- Modo Não Perturbe via kglobalaccel
+- Suporte completo ao Wayland
+- Listagem de apps via arquivos .desktop
+
+### Linux (GNOME/Outros)
+- Bloqueio via wmctrl/xdotool (X11)
+- Modo Não Perturbe via gsettings
 
 ## 🚀 Instalação
 
-### Pré-requisitos
+### 📦 Download Rápido (Recomendado)
+
+#### Linux (Debian/Ubuntu)
+```bash
+# Instalação automática via script
+curl -fsSL https://raw.githubusercontent.com/diogobuzatto/focuslock/main/install.sh | bash
+
+# Ou baixe o .deb diretamente
+wget https://github.com/diogobuzatto/focuslock/releases/latest/download/FocusLock-1.0.0-linux-x64.deb
+sudo dpkg -i FocusLock-1.0.0-linux-x64.deb
+```
+
+#### Linux (Fedora/RHEL)
+```bash
+# Baixe o .rpm
+wget https://github.com/diogobuzatto/focuslock/releases/latest/download/FocusLock-1.0.0-linux-x64.rpm
+sudo dnf install ./FocusLock-1.0.0-linux-x64.rpm
+```
+
+#### Linux (AppImage - Universal)
+```bash
+wget https://github.com/diogobuzatto/focuslock/releases/latest/download/FocusLock-1.0.0-linux-x64.AppImage
+chmod +x FocusLock-1.0.0-linux-x64.AppImage
+./FocusLock-1.0.0-linux-x64.AppImage
+```
+
+#### Windows
+Baixe o instalador `.exe` da [página de releases](https://github.com/diogobuzatto/focuslock/releases/latest).
+
+#### macOS (Homebrew)
+```bash
+# Após publicar o tap
+brew install --cask diogobuzatto/tap/focuslock
+
+# Ou baixe o .dmg da página de releases
+```
+
+---
+
+### 🔧 Build do Código Fonte
+
+#### Pré-requisitos
 
 - [Node.js](https://nodejs.org/) (versão 18 ou superior)
 - npm ou yarn
 
-### Passos
+**Linux (KDE Plasma):**
+- KDE Plasma 6 com Wayland
+- `qdbus` (geralmente já instalado no KDE)
 
-1. Clone o repositório ou navegue até a pasta do projeto:
+**Windows:**
+- Windows 10 ou superior
+- PowerShell (já incluído)
+
+#### Passos
+
+1. Clone o repositório:
 
 ```bash
-cd FocusLock
+git clone https://github.com/diogobuzatto/focuslock.git
+cd focuslock
 ```
 
 2. Instale as dependências:
@@ -71,7 +141,10 @@ FocusLock/
 ├── src/
 │   ├── main/
 │   │   ├── main.ts          # Processo principal do Electron
-│   │   └── preload.ts       # Script de preload (ponte IPC)
+│   │   ├── preload.ts       # Script de preload (ponte IPC)
+│   │   ├── blocker.ts       # Lógica de bloqueio de apps
+│   │   ├── kde-blocker.ts   # Bloqueio específico para KDE/Wayland
+│   │   └── windows-blocker.ts # Bloqueio específico para Windows
 │   └── renderer/
 │       ├── index.tsx        # Entrada do React
 │       ├── App.tsx          # Componente principal
@@ -82,7 +155,7 @@ FocusLock/
 │       │   ├── AppSelector.tsx  # Modal de seleção de apps
 │       │   └── SessionHistory.tsx # Modal de histórico
 │       └── styles/
-│           └── global.css   # Estilos globais
+│           └── global.css   # Estilos Liquid Glass
 ├── public/
 │   └── index.html           # HTML principal
 ├── package.json
@@ -93,10 +166,16 @@ FocusLock/
 
 ## 🎮 Como Usar
 
-1. **Defina o Tempo** - Use os botões predefinidos (15, 25, 45, 60, 90 min) ou o slider para escolher a duração
+1. **Defina o Tempo** - Use os botões predefinidos (5, 15, 25, 45, 60 min) ou o slider para escolher a duração
 2. **Selecione os Apps** - Clique em "Selecionar Apps Permitidos" e escolha quais apps você usará
+   - Sem apps selecionados = apenas modo "Não Perturbe" (use qualquer app)
+   - Use "Desmarcar Todos" para limpar a seleção
 3. **Inicie o Foco** - Clique em "Iniciar Foco" e concentre-se!
-4. **Acompanhe seu Progresso** - Veja seu histórico de sessões clicando no ícone 📊
+4. **Durante o Foco**:
+   - Apps não permitidos serão minimizados automaticamente
+   - O modo "Não Perturbe" será ativado no KDE
+   - Pause/continue quando precisar
+5. **Acompanhe seu Progresso** - Veja seu histórico de sessões clicando no ícone 📊
 
 ## 🛠️ Tecnologias
 
@@ -116,14 +195,28 @@ FocusLock/
 | `npm run pack` | Gera build sem instalador |
 | `npm run dist` | Gera instaladores para distribuição |
 
-## 🔮 Próximos Passos (Roadmap)
+## 🔮 Roadmap
 
-- [ ] Bloqueio real de aplicativos durante sessões
-- [ ] Temas claro/escuro
+### ✅ Implementado
+- [x] Timer de foco com interface moderna
+- [x] Seleção de apps permitidos
+- [x] Bloqueio real de aplicativos (KDE/Wayland)
+- [x] Bloqueio real de aplicativos (Windows)
+- [x] Modo "Não Perturbe" automático (KDE e Windows)
+- [x] Pausar/Continuar sessão
+- [x] Histórico de sessões
+- [x] Tema Liquid Glass (inspirado no macOS)
+- [x] Trilha de progresso animada
+- [x] Suporte multiplataforma (Windows + Linux)
+
+### 🚧 Próximos Passos
+- [ ] Suporte a macOS
+- [ ] Suporte a GNOME/X11 melhorado
+- [ ] Tema claro/escuro
 - [ ] Estatísticas semanais/mensais
 - [ ] Integração com Pomodoro (intervalos automáticos)
 - [ ] Sons ambiente para foco
-- [ ] Sincronização em nuvem
+- [ ] Atalhos de teclado globais
 
 ## 📄 Licença
 
@@ -131,4 +224,3 @@ Este projeto está sob a licença MIT. Veja o arquivo [LICENSE](LICENSE) para ma
 
 ---
 
-Feito com ❤️ por Diogo Buzatto

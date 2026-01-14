@@ -8,10 +8,12 @@ let permissionsChecked = false;
 
 function createWindow(): void {
   mainWindow = new BrowserWindow({
-    width: 450,
-    height: 700,
-    minWidth: 400,
-    minHeight: 600,
+    width: 420,
+    height: 750,
+    minWidth: 320,
+    minHeight: 500,
+    maxWidth: 800,
+    maxHeight: 1200,
     resizable: true,
     frame: true,
     titleBarStyle: 'hiddenInset',
@@ -168,13 +170,33 @@ function getInstalledApps(): Promise<string[]> {
         resolve(apps.length > 0 ? apps : getDefaultApps());
       });
     } else if (platform === 'win32') {
-      const command = 'powershell "Get-ItemProperty HKLM:\\Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\* | Select-Object DisplayName | Format-Table -HideTableHeaders"';
+      // Lista apps do Windows de múltiplas fontes
+      const commands = [
+        // Apps instalados via registro (x64)
+        'Get-ItemProperty HKLM:\\Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\* | Where-Object { $_.DisplayName } | Select-Object -ExpandProperty DisplayName',
+        // Apps instalados via registro (x86)
+        'Get-ItemProperty HKLM:\\Software\\WOW6432Node\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\* | Where-Object { $_.DisplayName } | Select-Object -ExpandProperty DisplayName',
+        // Apps do usuário
+        'Get-ItemProperty HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\* | Where-Object { $_.DisplayName } | Select-Object -ExpandProperty DisplayName',
+        // UWP/Microsoft Store apps
+        'Get-AppxPackage | Where-Object { $_.IsFramework -eq $false } | Select-Object -ExpandProperty Name'
+      ];
+      
+      const command = `powershell -Command "${commands.join('; ')}"`;
       exec(command, (error, stdout) => {
         if (error) {
           resolve(getDefaultApps());
           return;
         }
-        const apps = stdout.split('\n').map((app) => app.trim()).filter((app) => app.length > 0 && app.length < 50).sort();
+        const apps = stdout
+          .split('\n')
+          .map((app) => app.trim())
+          .filter((app) => app.length > 0 && app.length < 60)
+          .filter((app) => !app.startsWith('Microsoft.') || app.includes('Office') || app.includes('Teams') || app.includes('Edge'))
+          .filter((app) => !app.includes('Update') && !app.includes('Redistributable') && !app.includes('SDK'))
+          .map((app) => formatWindowsAppName(app))
+          .filter((app, index, self) => self.indexOf(app) === index) // Remove duplicados
+          .sort();
         resolve(apps.length > 0 ? apps : getDefaultApps());
       });
     } else {
@@ -209,6 +231,20 @@ function formatAppName(name: string): string {
     .split(' ')
     .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
     .join(' ');
+  
+  return formatted;
+}
+
+// Formata nome do app Windows
+function formatWindowsAppName(name: string): string {
+  // Remove prefixos de pacotes UWP
+  let formatted = name
+    .replace(/^Microsoft\./g, '')
+    .replace(/\.x64$/g, '')
+    .replace(/\.x86$/g, '')
+    .replace(/\(x64\)/g, '')
+    .replace(/\(x86\)/g, '')
+    .trim();
   
   return formatted;
 }
@@ -274,6 +310,20 @@ app.whenReady().then(() => {
   ipcMain.handle('stop-focus', async () => {
     console.log('Parando modo foco');
     await stopBlocking();
+    return true;
+  });
+
+  // Handler para pausar o modo foco (para o bloqueio temporariamente)
+  ipcMain.handle('pause-focus', async () => {
+    console.log('Pausando modo foco');
+    await stopBlocking();
+    return true;
+  });
+
+  // Handler para retomar o modo foco
+  ipcMain.handle('resume-focus', async (_event, allowedApps: string[]) => {
+    console.log('Retomando modo foco com apps:', allowedApps);
+    await startBlocking(allowedApps);
     return true;
   });
 

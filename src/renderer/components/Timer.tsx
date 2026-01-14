@@ -10,8 +10,9 @@ const Timer: React.FC<TimerProps> = ({ timeRemaining, totalTime, isRunning }) =>
   const minutes = Math.floor(timeRemaining / 60);
   const seconds = timeRemaining % 60;
   
-  const progress = ((totalTime - timeRemaining) / totalTime) * 100;
-  const circumference = 2 * Math.PI * 120; // raio de 120
+  // Mostra o tempo restante (100% no início, 0% quando acabar)
+  const progress = (timeRemaining / totalTime) * 100;
+  const circumference = 2 * Math.PI * 130; // raio de 130 (igual ao círculo SVG)
   const strokeDashoffset = circumference - (progress / 100) * circumference;
 
   const formatTime = (num: number): string => {
@@ -20,28 +21,47 @@ const Timer: React.FC<TimerProps> = ({ timeRemaining, totalTime, isRunning }) =>
 
   return (
     <div className={`timer-container ${isRunning ? 'running' : ''}`}>
-      <svg className="timer-svg" viewBox="0 0 260 260">
-        {/* Círculo de fundo */}
+      <svg className="timer-svg" viewBox="0 0 280 280">
+        <defs>
+          {/* Gradiente para a trilha de progresso */}
+          <linearGradient id="progressGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="#5AC8FA" />
+            <stop offset="50%" stopColor="#007AFF" />
+            <stop offset="100%" stopColor="#a855f7" />
+          </linearGradient>
+          
+          {/* Filtro de brilho */}
+          <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+            <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+            <feMerge>
+              <feMergeNode in="coloredBlur"/>
+              <feMergeNode in="SourceGraphic"/>
+            </feMerge>
+          </filter>
+        </defs>
+        
+        {/* Círculo de fundo (trilha) */}
         <circle
-          className="timer-bg"
-          cx="130"
-          cy="130"
-          r="120"
+          className="timer-track"
+          cx="140"
+          cy="140"
+          r="130"
           fill="none"
-          strokeWidth="8"
+          strokeWidth="4"
         />
-        {/* Círculo de progresso */}
+        
+        {/* Círculo de progresso com gradiente */}
         <circle
           className="timer-progress"
-          cx="130"
-          cy="130"
-          r="120"
+          cx="140"
+          cy="140"
+          r="130"
           fill="none"
-          strokeWidth="8"
+          strokeWidth="5"
           strokeDasharray={circumference}
           strokeDashoffset={strokeDashoffset}
           strokeLinecap="round"
-          transform="rotate(-90 130 130)"
+          transform="rotate(-90 140 140)"
         />
       </svg>
       

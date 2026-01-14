@@ -4,3 +4,31 @@ release/
 *.log
 .DS_Store
 Thumbs.db
+
+# Build outputs
+*.js.map
+*.d.ts
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# OS generated
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Desktop.ini
+
+# Electron
+out/
+
+# npm
+npm-debug.log*
+package-lock.json.bak

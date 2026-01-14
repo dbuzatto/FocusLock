@@ -3,15 +3,36 @@
   "version": "1.0.0",
   "description": "Aplicativo de foco e produtividade - Bloqueie distrações e mantenha o foco!",
   "main": "dist/main/main.js",
+  "homepage": "https://github.com/diogobuzatto/focuslock",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/diogobuzatto/focuslock.git"
+  },
   "scripts": {
     "start": "npm run build && electron .",
     "build": "tsc && webpack --mode production",
     "dev": "concurrently \"tsc -w\" \"webpack --mode development --watch\" \"wait-on dist/renderer.js && electron .\"",
     "pack": "electron-builder --dir",
-    "dist": "electron-builder"
+    "dist": "npm run build && electron-builder",
+    "dist:linux": "npm run build && electron-builder --linux",
+    "dist:win": "npm run build && electron-builder --win",
+    "dist:mac": "npm run build && electron-builder --mac",
+    "dist:all": "npm run build && electron-builder -mwl",
+    "postinstall": "electron-builder install-app-deps"
   },
-  "author": "Diogo Buzatto",
+  "author": {
+    "name": "Diogo Buzatto",
+    "email": "diogo@buzatto.dev"
+  },
   "license": "MIT",
+  "keywords": [
+    "focus",
+    "productivity",
+    "timer",
+    "pomodoro",
+    "distraction-blocker",
+    "electron"
+  ],
   "devDependencies": {
     "@types/node": "^20.10.0",
     "@types/react": "^18.2.45",
@@ -34,23 +55,116 @@
   "build": {
     "appId": "com.focuslock.app",
     "productName": "FocusLock",
+    "copyright": "Copyright © 2024 Diogo Buzatto",
+    "artifactName": "${productName}-${version}-${os}-${arch}.${ext}",
     "directories": {
-      "output": "release"
+      "output": "release",
+      "buildResources": "assets"
     },
     "files": [
       "dist/**/*",
+      "public/**/*",
       "package.json"
     ],
+    "extraResources": [
+      {
+        "from": "assets/",
+        "to": "assets/",
+        "filter": ["**/*"]
+      }
+    ],
     "linux": {
-      "target": ["AppImage", "deb"],
-      "category": "Utility"
+      "target": [
+        {
+          "target": "deb",
+          "arch": ["x64"]
+        },
+        {
+          "target": "AppImage",
+          "arch": ["x64"]
+        }
+      ],
+      "category": "Utility;Office;",
+      "icon": "assets/icons",
+      "synopsis": "Bloqueie distrações e maximize seu foco",
+      "description": "FocusLock é um aplicativo de produtividade que ajuda você a manter o foco bloqueando aplicativos distrativos durante sessões de trabalho.",
+      "desktop": {
+        "Name": "FocusLock",
+        "Comment": "Aplicativo de foco e produtividade",
+        "Categories": "Utility;Office;Productivity;",
+        "Keywords": "focus;productivity;timer;pomodoro;blocker;"
+      },
+      "maintainer": "Diogo Buzatto <diogo@buzatto.dev>"
+    },
+    "deb": {
+      "depends": ["libnotify4", "libxtst6", "libnss3"],
+      "priority": "optional",
+      "compression": "xz"
     },
     "mac": {
-      "target": ["dmg", "zip"],
-      "category": "public.app-category.productivity"
+      "target": [
+        {
+          "target": "dmg",
+          "arch": ["x64", "arm64"]
+        },
+        {
+          "target": "zip",
+          "arch": ["x64", "arm64"]
+        }
+      ],
+      "category": "public.app-category.productivity",
+      "icon": "assets/icon.icns",
+      "hardenedRuntime": true,
+      "gatekeeperAssess": false
+    },
+    "dmg": {
+      "title": "FocusLock Installer",
+      "icon": "assets/icon.icns",
+      "contents": [
+        {
+          "x": 130,
+          "y": 220
+        },
+        {
+          "x": 410,
+          "y": 220,
+          "type": "link",
+          "path": "/Applications"
+        }
+      ]
     },
     "win": {
-      "target": ["nsis", "portable"]
+      "target": [
+        {
+          "target": "nsis",
+          "arch": ["x64", "ia32"]
+        },
+        {
+          "target": "portable",
+          "arch": ["x64"]
+        }
+      ],
+      "icon": "assets/icon.ico",
+      "publisherName": "Diogo Buzatto"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "installerIcon": "assets/icon.ico",
+      "uninstallerIcon": "assets/icon.ico",
+      "installerHeaderIcon": "assets/icon.ico",
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "FocusLock",
+      "runAfterFinish": true,
+      "license": "LICENSE"
+    },
+    "publish": {
+      "provider": "github",
+      "owner": "diogobuzatto",
+      "repo": "focuslock",
+      "releaseType": "release"
     }
   }
 }

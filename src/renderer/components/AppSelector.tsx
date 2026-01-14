@@ -3,12 +3,14 @@ import React, { useState, useEffect } from 'react';
 interface AppSelectorProps {
   selectedApps: string[];
   onToggleApp: (app: string) => void;
+  onDeselectAll: () => void;
   onClose: () => void;
 }
 
 const AppSelector: React.FC<AppSelectorProps> = ({
   selectedApps,
   onToggleApp,
+  onDeselectAll,
   onClose,
 }) => {
   const [availableApps, setAvailableApps] = useState<string[]>([]);
@@ -78,7 +80,21 @@ const AppSelector: React.FC<AppSelectorProps> = ({
 
         <p className="modal-description">
           Selecione os aplicativos que você poderá usar durante o período de foco.
+          <br />
+          <small style={{ color: 'var(--text-muted)', marginTop: '4px', display: 'block' }}>
+            Sem apps selecionados = apenas modo "Não Perturbe"
+          </small>
         </p>
+
+        <div className="deselect-all-container">
+          <button 
+            className="deselect-all-btn" 
+            onClick={onDeselectAll}
+            disabled={selectedApps.length === 0}
+          >
+            ✕ Desmarcar Todos
+          </button>
+        </div>
 
         <div className="search-container">
           <input
@@ -139,7 +155,10 @@ const AppSelector: React.FC<AppSelectorProps> = ({
 
         <div className="modal-footer">
           <span className="selected-count">
-            {selectedApps.length} app{selectedApps.length !== 1 ? 's' : ''} selecionado{selectedApps.length !== 1 ? 's' : ''}
+            {selectedApps.length === 0 
+              ? '🔕 Apenas Não Perturbe' 
+              : `${selectedApps.length} app${selectedApps.length !== 1 ? 's' : ''} selecionado${selectedApps.length !== 1 ? 's' : ''}`
+            }
           </span>
           <button className="done-btn" onClick={onClose}>
             Concluir

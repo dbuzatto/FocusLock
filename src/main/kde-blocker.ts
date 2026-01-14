@@ -152,16 +152,37 @@ export async function minimizeWindowDBus(caption: string): Promise<boolean> {
   return await minimizeKDEWindow('', caption);
 }
 
+// Estado do DND para saber se precisamos desativar
+let dndWasEnabled = false;
+
 // Ativar modo Não Perturbe no KDE
 export async function enableKDEDoNotDisturb(): Promise<void> {
   try {
-    // Desativa notificações via dbus
-    await execAsync('dbus-send --dest=org.freedesktop.Notifications /org/freedesktop/Notifications org.freedesktop.Notifications.Inhibit string:"FocusLock" string:"Modo Foco Ativo" 2>/dev/null').catch(() => {});
+    // Mostra notificação informando que o foco iniciou
+    await execAsync('notify-send -i dialog-information -a "FocusLock" "🎯 Modo Foco Ativado" "Foco ativado! Bom trabalho!" -t 3000 2>/dev/null').catch(() => {});
     
-    // Alternativa: usar qdbus para definir o modo DND
-    await execAsync('qdbus org.kde.plasmashell /org/kde/osdService org.kde.osdService.showText string:"" string:"Modo Foco Ativado" 2>/dev/null').catch(() => {});
+    // Aguarda a notificação aparecer
+    await new Promise(resolve => setTimeout(resolve, 500));
     
-    console.log('KDE: Modo Não Perturbe ativado');
+    // Verifica se DND já está ativo
+    try {
+      const { stdout } = await execAsync('qdbus org.kde.plasmashell /org/freedesktop/Notifications org.freedesktop.DBus.Properties.Get org.freedesktop.Notifications Inhibited');
+      if (stdout.trim() === 'true') {
+        console.log('KDE: Não Perturbe já estava ativo');
+        dndWasEnabled = false; // Não desativar depois pois já estava ativo
+        return;
+      }
+    } catch {}
+    
+    // Ativa o modo Não Perturbe usando o atalho global do plasmashell
+    try {
+      await execAsync('qdbus org.kde.kglobalaccel /component/plasmashell org.kde.kglobalaccel.Component.invokeShortcut "toggle do not disturb"');
+      dndWasEnabled = true;
+      console.log('KDE: Modo Não Perturbe ativado via kglobalaccel');
+    } catch (e) {
+      console.log('Aviso: Não foi possível ativar DND via kglobalaccel:', e);
+      dndWasEnabled = false;
+    }
   } catch (error) {
     console.log('Aviso: Não foi possível ativar DND no KDE:', error);
   }
@@ -170,8 +191,25 @@ export async function enableKDEDoNotDisturb(): Promise<void> {
 // Desativar modo Não Perturbe no KDE
 export async function disableKDEDoNotDisturb(): Promise<void> {
   try {
-    await execAsync('qdbus org.kde.plasmashell /org/kde/osdService org.kde.osdService.showText string:"" string:"Modo Foco Desativado" 2>/dev/null').catch(() => {});
-    console.log('KDE: Modo Não Perturbe desativado');
+    // Só desativa se nós ativamos
+    if (dndWasEnabled) {
+      try {
+        // Verifica se ainda está ativo antes de desativar
+        const { stdout } = await execAsync('qdbus org.kde.plasmashell /org/freedesktop/Notifications org.freedesktop.DBus.Properties.Get org.freedesktop.Notifications Inhibited');
+        if (stdout.trim() === 'true') {
+          await execAsync('qdbus org.kde.kglobalaccel /component/plasmashell org.kde.kglobalaccel.Component.invokeShortcut "toggle do not disturb"');
+          console.log('KDE: Modo Não Perturbe desativado via kglobalaccel');
+        }
+      } catch (e) {
+        console.log('Aviso: Não foi possível desativar DND:', e);
+      }
+      dndWasEnabled = false;
+    }
+    
+    // Mostra notificação de fim do foco
+    await execAsync('notify-send -i dialog-information -a "FocusLock" "☕ Modo Foco Desativado" "Parabéns pelo foco! Hora de descansar." -t 3000 2>/dev/null').catch(() => {});
+    
+    console.log('KDE: Modo Foco desativado');
   } catch (error) {
     console.log('Aviso: Não foi possível desativar DND no KDE:', error);
   }

@@ -107,13 +107,20 @@ const App: React.FC = () => {
     setFocusActive(true);
   };
 
-  const pauseFocus = () => {
-    // Pausa apenas o timer, mantém o bloqueio ativo
+  const pauseFocus = async () => {
+    // Pausa o timer E o bloqueio
     setIsRunning(false);
+    if (window.electronAPI?.pauseFocus) {
+      await window.electronAPI.pauseFocus();
+    }
   };
 
-  const resumeFocus = () => {
+  const resumeFocus = async () => {
+    // Retoma o timer E o bloqueio
     setIsRunning(true);
+    if (window.electronAPI?.resumeFocus) {
+      await window.electronAPI.resumeFocus(selectedApps);
+    }
   };
 
   const stopFocus = () => {
@@ -192,6 +199,7 @@ const App: React.FC = () => {
         <AppSelector
           selectedApps={selectedApps}
           onToggleApp={toggleApp}
+          onDeselectAll={() => setSelectedApps([])}
           onClose={() => setShowAppSelector(false)}
         />
       )}

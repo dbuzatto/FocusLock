@@ -11,7 +11,7 @@ interface TimerControlsProps {
   onStop: () => void;
 }
 
-const PRESET_DURATIONS = [15, 25, 45, 60, 90];
+const PRESET_DURATIONS = [5, 15, 25, 45, 60];
 
 const TimerControls: React.FC<TimerControlsProps> = ({
   isRunning,
